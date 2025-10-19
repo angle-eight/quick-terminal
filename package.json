@@ -2,7 +2,7 @@
   "name": "quick-terminal-command",
   "displayName": "Quick Terminal Command",
   "description": "Quick terminal input extension with smart placeholders, command history, and flexible execution options",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "angle-eight",
   "engines": {
     "vscode": "^1.105.0"
