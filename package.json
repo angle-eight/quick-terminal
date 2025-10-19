@@ -1,6 +1,6 @@
 {
-  "name": "quick-terminal",
-  "displayName": "Quick Terminal",
+  "name": "quick-terminal-command",
+  "displayName": "Quick Terminal Command",
   "description": "Quick terminal input extension with smart placeholders, command history, and flexible execution options",
   "version": "0.0.1",
   "publisher": "angle-eight",
