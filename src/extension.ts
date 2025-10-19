@@ -13,19 +13,6 @@ export function activate(context: vscode.ExtensionContext) {
 		let currentInput: string = '';
 		let activeInputBox: vscode.InputBox | undefined;
 
-		// Use the console to output diagnostic information (console.log) and errors (console.error)
-		// This line of code will only be executed once when your extension is activated
-		console.log('Congratulations, your extension "quick-terminal" is now active!');
-
-		// The command has been defined in the package.json file
-		// Now provide the implementation of the command with registerCommand
-		// The commandId parameter must match the command field in package.json
-		const disposable = vscode.commands.registerCommand('quick-terminal.helloWorld', () => {
-			// The code you place here will be executed every time your command is executed
-			// Display a message box to the user
-			vscode.window.showInformationMessage('Hello World from quick-terminal!');
-		});
-
 		// Helper function to create and show input box with terminal integration
 		async function showTerminalInputBox(options: {
 			prompt?: string;
@@ -78,10 +65,6 @@ export function activate(context: vscode.ExtensionContext) {
 						// Process placeholders in the command before sending to terminal
 						const processedCommand = replacePlaceholders(trimmedCommand);
 
-						// Debug logging
-						console.log('Original command:', trimmedCommand);
-						console.log('Processed command:', processedCommand);
-
 						// Remove any existing occurrence of the same command from history
 						const existingIndex = commandHistory.indexOf(trimmedCommand);
 						if (existingIndex !== -1) {
@@ -131,10 +114,6 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 
 			const {text, autoExecute} = processCommandInput(input);
-
-			// Debug logging
-			console.log('Processed text:', text);
-			console.log('Auto execute:', autoExecute);
 
 			// Set the value in the InputBox
 			activeInputBox.value = text;
@@ -321,7 +300,6 @@ export function activate(context: vscode.ExtensionContext) {
 			const mightBeBusy = busyTerminalPatterns.some(pattern => pattern.test(terminalName));
 
 			if (mightBeBusy) {
-				console.log(`Terminal "${terminalName}" might be busy, creating new terminal`);
 				return vscode.window.createTerminal('Quick Terminal');
 			}
 
@@ -338,9 +316,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 			// Process placeholders for direct execution
 			const processedCommand = replacePlaceholders(trimmedCommand);
-
-			console.log('Executing command:', trimmedCommand);
-			console.log('Processed command:', processedCommand);
 
 			// Add original command (with placeholders) to history
 			const existingIndex = commandHistory.indexOf(trimmedCommand);
@@ -372,13 +347,11 @@ export function activate(context: vscode.ExtensionContext) {
 			// Check each pattern to find a match
 			for (const item of patterns) {
 				if (matchesPattern(fileName, item.pattern)) {
-					console.log(`Matched pattern "${item.pattern}" for file "${fileName}"`);
 					return item.command;
 				}
 			}
 
 			// No pattern matched, return first command as fallback
-			console.log(`No pattern matched for file "${fileName}", using fallback`);
 			return patterns.length > 0 ? patterns[0].command : '';
 		} catch (error) {
 			console.error('Error in selectCommandByPattern:', error);
@@ -490,7 +463,6 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		}
 
-		context.subscriptions.push(disposable);
 		context.subscriptions.push(inputToTerminal);
 		context.subscriptions.push(pasteCommand);
 		context.subscriptions.push(historyPrevious);

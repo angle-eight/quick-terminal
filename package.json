@@ -3,7 +3,7 @@
   "displayName": "Quick Terminal",
   "description": "Quick terminal input extension with smart placeholders, command history, and flexible execution options",
   "version": "0.0.1",
-  "publisher": "49491577-ac5f-610a-b512-edf19777bc9d",
+  "publisher": "angle-eight",
   "engines": {
     "vscode": "^1.105.0"
   },
@@ -22,12 +22,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/quick-terminal.git"
+    "url": "https://github.com/angle-eight/quick-terminal.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/quick-terminal/issues"
+    "url": "https://github.com/angle-eight/quick-terminal/issues"
   },
-  "homepage": "https://github.com/your-username/quick-terminal#readme",
+  "homepage": "https://github.com/angle-eight/quick-terminal#readme",
   "license": "MIT",
   "activationEvents": [],
   "main": "./dist/extension.js",
