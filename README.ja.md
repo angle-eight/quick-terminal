@@ -40,6 +40,8 @@ Quick Terminalは、実際の値に自動置換される様々なプレースホ
 - `{workspace}` - ワークスペースのルートパス
 - `{workspacename}` - ワークスペースフォルダ名
 
+**注意**: プレースホルダーはワークスペース内のファイルで作業している場合にのみ利用可能です。ワークスペース外のファイル（独立したファイルや無題ファイルなど）では、プレースホルダーの置換はサポートされていません。
+
 ### スマートパス処理
 
 プレースホルダーはパス内のスペースや特殊文字を自動的に処理します：
@@ -58,12 +60,18 @@ cp {filename} {workspace}/backup/   # → cp "script.py" "/workspace/backup/"
 
 ### 拡張機能設定
 
-- `quickTerminal.autoChangeDirectory`（boolean、デフォルト：true）
-  - コマンド実行前に現在のファイルのディレクトリに自動的に変更する
+- `quickTerminal.autoChangeDirectory`（string、デフォルト：「workspace」）
+  - コマンド実行前のディレクトリ変更動作を制御
+  - オプション：
+    - `"none"`: ディレクトリを変更しない
+    - `"file"`: 現在のファイルのディレクトリに変更
+    - `"workspace"`: ワークスペースルートディレクトリに変更（デフォルト）
 
 ## カスタムキーバインドの例
 
 機能を拡張するために、VS Codeのkeybindings.jsonに以下を追加してください：
+
+**注意**: `"quickTerminal.inputBoxActive"` の `when` 条件を使用して、Quick Terminalの入力ボックスがアクティブな時のみキーバインドが動作するようにしてください。これにより、他のVS Code機能との競合を防げます。
 
 ### 基本コマンドテンプレート
 
@@ -204,7 +212,10 @@ Quick Terminalは、ターミナルがビジー状態の可能性を自動的に
 2. **パス結合**: 安全なパス結合には `{dirname}/subfolder/file` を使用
 3. **自動実行**: 頻繁に実行するコマンドには `"autoExecute": true` を設定
 4. **パターンマッチング**: 異なるファイルタイプに対して異なるコマンドを作成
-5. **自動CD無効化**: 常にワークスペースルートから作業したい場合は `quickTerminal.autoChangeDirectory: false` を設定
+5. **ディレクトリ制御**: `quickTerminal.autoChangeDirectory` で作業ディレクトリを制御：
+   - `"workspace"`（デフォルト）: ワークスペースルートからコマンドを実行
+   - `"file"`: 現在のファイルのディレクトリからコマンドを実行
+   - `"none"`: 現在のターミナルディレクトリからコマンドを実行
 
 ## 要件
 

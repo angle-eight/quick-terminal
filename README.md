@@ -1,4 +1,4 @@
-# Quick Terminal
+# Quick Terminal Command
 
 A VS Code extension for quick terminal command input with smart placeholders, command history, and flexible execution options.
 
@@ -40,6 +40,8 @@ Quick Terminal supports various placeholders that are automatically replaced wit
 - `{workspace}` - Workspace root path
 - `{workspacename}` - Workspace folder name
 
+**Note**: Placeholders are only available when working with files within a workspace. Files outside of workspace (such as standalone files or untitled files) do not support placeholder replacement.
+
 ### Smart Path Handling
 
 Placeholders automatically handle spaces and special characters in paths:
@@ -56,12 +58,18 @@ cp {filename} {workspace}/backup/   # → cp "script.py" "/workspace/backup/"
 
 ## Configuration
 
-- `quickTerminal.autoChangeDirectory` (boolean, default: true)
-  - Automatically change to the current file's directory before executing commands
+- `quickTerminal.autoChangeDirectory` (string, default: "workspace")
+  - Controls directory changing behavior before executing commands
+  - Options:
+    - `"none"`: Do not change directory
+    - `"file"`: Change to current file's directory
+    - `"workspace"`: Change to workspace root directory (default)
 
 ## Custom Keybindings Examples
 
 Add these to your VS Code keybindings.json for enhanced functionality:
+
+**Note**: Use the `when` condition `"quickTerminal.inputBoxActive"` to ensure keybindings only work when the Quick Terminal input box is active. This prevents conflicts with other VS Code functionality.
 
 ### Basic Command Templates
 
@@ -202,7 +210,10 @@ Quick Terminal automatically detects when terminals might be busy and creates ne
 2. **Path Concatenation**: Use `{dirname}/subfolder/file` for safe path joining
 3. **Auto-Execute**: Set `"autoExecute": true` for commands you run frequently
 4. **Pattern Matching**: Create different commands for different file types
-5. **Disable Auto-CD**: Set `quickTerminal.autoChangeDirectory: false` if you prefer working from workspace root
+5. **Directory Control**: Use `quickTerminal.autoChangeDirectory` to control working directory:
+   - `"workspace"` (default): Commands run from workspace root
+   - `"file"`: Commands run from current file's directory
+   - `"none"`: Commands run from current terminal directory
 
 ## Requirements
 

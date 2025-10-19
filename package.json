@@ -59,9 +59,19 @@
       "title": "Quick Terminal",
       "properties": {
         "quickTerminal.autoChangeDirectory": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically change to the current file's directory before executing commands"
+          "type": "string",
+          "enum": [
+            "none",
+            "file",
+            "workspace"
+          ],
+          "enumDescriptions": [
+            "Do not change directory",
+            "Change to current file's directory",
+            "Change to workspace root directory"
+          ],
+          "default": "workspace",
+          "description": "Directory to change to before executing commands"
         }
       }
     },

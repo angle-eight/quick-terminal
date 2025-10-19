@@ -399,50 +399,111 @@ export function activate(context: vscode.ExtensionContext) {
 			// Get current active editor
 			const activeEditor = vscode.window.activeTextEditor;
 
-			if (activeEditor && activeEditor.document.uri.scheme === 'file') {
-				const fileName = path.basename(activeEditor.document.fileName);
-				const fileStem = path.basename(activeEditor.document.fileName, path.extname(activeEditor.document.fileName));
-				const filePath = activeEditor.document.fileName;
-				const fileExt = path.extname(activeEditor.document.fileName);
-				const dirName = path.dirname(activeEditor.document.fileName);
+			if (activeEditor) {
+				// For file:// scheme, we can do full replacement including directory operations
+				if (activeEditor.document.uri.scheme === 'file') {
+					const fileName = path.basename(activeEditor.document.fileName);
+					const fileStem = path.basename(activeEditor.document.fileName, path.extname(activeEditor.document.fileName));
+					const filePath = activeEditor.document.fileName;
+					const fileExt = path.extname(activeEditor.document.fileName);
+					const dirName = path.dirname(activeEditor.document.fileName);
 
-				// Smart replacement: handle path concatenation properly
-				// Replace {dirname}/something with "full/path/something" (quoted as a whole)
-				result = result.replace(/\{dirname\}\/([^\s]+)/g, (match, suffix) => {
-					return escapeShellArg(path.join(dirName, suffix));
-				});
-
-				// Replace {workspace}/something with "full/workspace/path/something" (quoted as a whole)
-				if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-					const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-					result = result.replace(/\{workspace\}\/([^\s]+)/g, (match, suffix) => {
-						return escapeShellArg(path.join(workspacePath, suffix));
+					// Smart replacement: handle path concatenation properly
+					// Replace {dirname}/something with "full/path/something" (quoted as a whole)
+					result = result.replace(/\{dirname\}\/([^\s]+)/g, (match, suffix) => {
+						return escapeShellArg(path.join(dirName, suffix));
 					});
+
+					// Replace {workspace}/something with "full/workspace/path/something" (quoted as a whole)
+					if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+						const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+						result = result.replace(/\{workspace\}\/([^\s]+)/g, (match, suffix) => {
+							return escapeShellArg(path.join(workspacePath, suffix));
+						});
+					}
+
+					// Handle remaining standalone placeholders (quoted for safety)
+					result = result.replace(/\{filename\}/g, escapeShellArg(fileName));
+					result = result.replace(/\{filestem\}/g, escapeShellArg(fileStem));
+					result = result.replace(/\{filepath\}/g, escapeShellArg(filePath));
+					result = result.replace(/\{dirname\}/g, escapeShellArg(dirName));
+
+					// {fileext} - File extension (usually safe without quotes)
+					result = result.replace(/\{fileext\}/g, fileExt);
+
+					// {relativepath} - File path relative to workspace
+					if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+						const relativePath = vscode.workspace.asRelativePath(activeEditor.document.fileName);
+						result = result.replace(/\{relativepath\}/g, escapeShellArg(relativePath));
+					}
+
+					// Check setting for auto cd functionality
+					const config = vscode.workspace.getConfiguration('quickTerminal');
+					const autoChangeDirectory = config.get<string>('autoChangeDirectory', 'workspace');
+
+					if (autoChangeDirectory === 'file') {
+						// Change to the file's directory for execution context
+						result = `cd ${escapeShellArg(dirName)} && ${result}`;
+					} else if (autoChangeDirectory === 'workspace') {
+						// Change to the workspace root directory
+						if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+							const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+							result = `cd ${escapeShellArg(workspaceRoot)} && ${result}`;
+						}
+					}
+					// If autoChangeDirectory === 'none', don't change directory
+				} else {
+					// For non-file schemes (untitled:, remote, etc.), replace what we can
+					const uri = activeEditor.document.uri;
+					let fileName = '';
+					let fileStem = '';
+					let fileExt = '';
+
+					if (uri.path) {
+						fileName = path.basename(uri.path);
+						fileStem = path.basename(uri.path, path.extname(uri.path));
+						fileExt = path.extname(uri.path);
+					} else if (activeEditor.document.fileName) {
+						// Fallback to fileName property
+						fileName = path.basename(activeEditor.document.fileName);
+						fileStem = path.basename(activeEditor.document.fileName, path.extname(activeEditor.document.fileName));
+						fileExt = path.extname(activeEditor.document.fileName);
+					}
+
+					// Replace basic file info (no directory operations for non-file schemes)
+					if (fileName) {
+						result = result.replace(/\{filename\}/g, escapeShellArg(fileName));
+					}
+					if (fileStem) {
+						result = result.replace(/\{filestem\}/g, escapeShellArg(fileStem));
+					}
+					if (fileExt) {
+						result = result.replace(/\{fileext\}/g, fileExt);
+					}
+
+					// Show warning for unsupported placeholders with non-file schemes
+					const unsupportedPlaceholders = ['{filepath}', '{dirname}', '{relativepath}'];
+					const hasUnsupportedPlaceholders = unsupportedPlaceholders.some(placeholder =>
+						text.includes(placeholder) && result.includes(placeholder)
+					);
+
+					if (hasUnsupportedPlaceholders) {
+						vscode.window.showWarningMessage(
+							`ファイルスキーム以外では {filepath}, {dirname}, {relativepath} プレースホルダーは使用できません (${uri.scheme}:)`,
+							'OK'
+						);
+					}
 				}
+			} else {
+				// Show warning when file-related placeholders are used but no active file editor
+				const fileRelatedPlaceholders = ['{filename}', '{filestem}', '{filepath}', '{dirname}', '{fileext}', '{relativepath}'];
+				const hasFileRelatedPlaceholders = fileRelatedPlaceholders.some(placeholder => text.includes(placeholder));
 
-				// Handle remaining standalone placeholders (quoted for safety)
-				result = result.replace(/\{filename\}/g, escapeShellArg(fileName));
-				result = result.replace(/\{filestem\}/g, escapeShellArg(fileStem));
-				result = result.replace(/\{filepath\}/g, escapeShellArg(filePath));
-				result = result.replace(/\{dirname\}/g, escapeShellArg(dirName));
-
-				// {fileext} - File extension (usually safe without quotes)
-				result = result.replace(/\{fileext\}/g, fileExt);
-
-				// {relativepath} - File path relative to workspace
-				if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-					const relativePath = vscode.workspace.asRelativePath(activeEditor.document.fileName);
-					result = result.replace(/\{relativepath\}/g, escapeShellArg(relativePath));
-				}
-
-				// Check setting for auto cd functionality
-				const config = vscode.workspace.getConfiguration('quickTerminal');
-				const autoChangeDirectory = config.get<boolean>('autoChangeDirectory', true);
-
-				if (autoChangeDirectory) {
-					// Automatically cd to the file's directory for execution context
-					// This ensures commands run in the correct location
-					result = `cd ${escapeShellArg(dirName)} && ${result}`;
+				if (hasFileRelatedPlaceholders) {
+					vscode.window.showWarningMessage(
+						'ファイル関連のプレースホルダーを使用していますが、アクティブなファイルエディターがありません。',
+						'OK'
+					);
 				}
 			}
 
@@ -454,6 +515,26 @@ export function activate(context: vscode.ExtensionContext) {
 				// Handle remaining standalone workspace placeholders
 				result = result.replace(/\{workspace\}/g, escapeShellArg(workspacePath));
 				result = result.replace(/\{workspacename\}/g, escapeShellArg(workspaceName));
+			} else {
+				// Show warning when workspace placeholders are used but no workspace is open
+				const workspaceRelatedPlaceholders = ['{workspace}', '{workspacename}'];
+				const hasWorkspaceRelatedPlaceholders = workspaceRelatedPlaceholders.some(placeholder => text.includes(placeholder));
+
+				if (hasWorkspaceRelatedPlaceholders) {
+					vscode.window.showWarningMessage(
+						'ワークスペース関連のプレースホルダーを使用していますが、ワークスペースが開かれていません。',
+						'OK'
+					);
+				}
+			}
+
+			// Check for any remaining unresolved placeholders and warn
+			const remainingPlaceholders = result.match(/\{[^}]+\}/g);
+			if (remainingPlaceholders && remainingPlaceholders.length > 0) {
+				vscode.window.showWarningMessage(
+					`未解決のプレースホルダーが見つかりました: ${remainingPlaceholders.join(', ')}`,
+					'OK'
+				);
 			}
 
 			return result;
