@@ -2,7 +2,7 @@
   "name": "quick-terminal-command",
   "displayName": "Quick Terminal Command",
   "description": "Quick terminal input extension with smart placeholders, command history, and flexible execution options",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "publisher": "angle-eight",
   "engines": {
     "vscode": "^1.105.0"
@@ -34,62 +34,142 @@
   "contributes": {
     "commands": [
       {
-        "command": "quick-terminal.inputToTerminal",
+        "command": "quick-terminal-command.showQuickInput",
         "title": "Input to Terminal"
       },
       {
-        "command": "quick-terminal.pasteCommand",
+        "command": "quick-terminal-command.pasteCommand",
         "title": "Paste Command to InputBox"
       },
       {
-        "command": "quick-terminal.historyPrevious",
+        "command": "quick-terminal-command.historyPrevious",
         "title": "Previous Command in History"
       },
       {
-        "command": "quick-terminal.historyNext",
+        "command": "quick-terminal-command.restorePlaceholder",
+        "title": "Restore Placeholder in history command"
+      },
+      {
+        "command": "quick-terminal-command.historyNext",
         "title": "Next Command in History"
       },
       {
-        "command": "quick-terminal.inputWithPastedCommand",
+        "command": "quick-terminal-command.inputWithPastedCommand",
         "title": "Input to Terminal with Pasted Command"
+      },
+      {
+        "command": "quick-terminal-command.showLastCommand",
+        "title": "Show Last Command in InputBox"
+      },
+      {
+        "command": "quick-terminal-command.searchHistory",
+        "title": "Search Command History"
+      },
+      {
+        "command": "quick-terminal-command.exitSearch",
+        "title": "Exit Search Mode"
+      },
+      {
+        "command": "quick-terminal-command.selectSearchResult",
+        "title": "Select Current Search Result"
+      },
+      {
+        "command": "quick-terminal-command.clearInput",
+        "title": "Clear Input Box Content"
       }
     ],
     "configuration": {
       "type": "object",
-      "title": "Quick Terminal",
+      "title": "Quick Terminal Command",
       "properties": {
-        "quickTerminal.autoChangeDirectory": {
+        "quickTerminalCommand.autoChangeDirectory": {
           "type": "string",
           "enum": [
             "none",
+            "auto (experimental)",
             "file",
             "workspace"
           ],
           "enumDescriptions": [
             "Do not change directory",
+            "Automatically detect and change to appropriate directory based on command type (experimental)",
             "Change to current file's directory",
             "Change to workspace root directory"
           ],
           "default": "workspace",
           "description": "Directory to change to before executing commands"
+        },
+        "quickTerminalCommand.shell": {
+          "type": "string",
+          "default": "",
+          "description": "Shell executable path for quick terminal. Leave empty to use VS Code's default terminal shell."
+        },
+        "quickTerminalCommand.shellArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Shell arguments for quick terminal. Only used when quickTerminalCommand.shell is specified."
+        },
+        "quickTerminalCommand.historySize": {
+          "type": "number",
+          "default": 100,
+          "minimum": 10,
+          "maximum": 1000,
+          "description": "Maximum number of commands to keep in history. History is preserved across VS Code sessions."
+        },
+        "quickTerminalCommand.createNewTerminalWhenBusy": {
+          "type": "boolean",
+          "default": true,
+          "description": "Create a new terminal when the current one appears to be running a long-running process. When enabled, allows running multiple commands simultaneously."
         }
       }
     },
     "keybindings": [
       {
-        "command": "quick-terminal.inputToTerminal",
+        "command": "quick-terminal-command.showQuickInput",
         "key": "ctrl+alt+i",
         "when": "editorTextFocus"
       },
       {
-        "command": "quick-terminal.historyPrevious",
+        "command": "quick-terminal-command.historyPrevious",
         "key": "up",
-        "when": "quickTerminal.inputBoxActive"
+        "when": "quickTerminalCommand.inputBoxActive"
       },
       {
-        "command": "quick-terminal.historyNext",
+        "command": "quick-terminal-command.restorePlaceholder",
+        "key": "ctrl+alt+r",
+        "when": "quickTerminalCommand.inputBoxActive"
+      },
+      {
+        "command": "quick-terminal-command.historyNext",
         "key": "down",
-        "when": "quickTerminal.inputBoxActive"
+        "when": "quickTerminalCommand.inputBoxActive"
+      },
+      {
+        "command": "quick-terminal-command.showLastCommand",
+        "key": "ctrl+alt+l"
+      },
+      {
+        "command": "quick-terminal-command.searchHistory",
+        "key": "ctrl+r",
+        "when": "quickTerminalCommand.inputBoxActive"
+      },
+      {
+        "command": "quick-terminal-command.exitSearch",
+        "key": "escape",
+        "when": "quickTerminalCommand.inputBoxActive"
+      },
+      {
+        "command": "quick-terminal-command.selectSearchResult",
+        "key": "ctrl+alt+tab",
+        "when": "quickTerminalCommand.inputBoxActive"
+      },
+      {
+        "command": "quick-terminal-command.clearInput",
+        "key": "ctrl+u",
+        "when": "quickTerminalCommand.inputBoxActive"
       }
     ]
   },

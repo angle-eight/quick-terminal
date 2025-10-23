@@ -1,156 +1,251 @@
-# Quick Terminal
+# Quick Terminal Command
 
-素早くよく使うターミナルコマンド入力をするためのVS Code用の拡張機能です。
+プレースホルダーとコマンド履歴を使って素早くターミナルコマンドを入力するVS Code拡張機能です。
 
 **[日本語版 README](README.ja.md) | [English README](README.md)**
 
-## 機能
+## 基本的な使い方
 
-- **高速ターミナル入力**: 入力ボックスを開いて素早くターミナルコマンドを入力・実行
-- **スマートプレースホルダー**: `{filename}`、`{dirname}`等のプレースホルダーを自動パス処理で使用
-- **コマンド履歴**: 矢印キーで過去のコマンドをナビゲート
-- **自動ディレクトリ変更**: 現在のファイルのディレクトリに自動でcdする機能（設定可能）
-- **柔軟なコマンドテンプレート**: パターンマッチングと自動実行をサポート
+1. `Ctrl+Alt+I` でターミナル入力ボックスを開く
+2. `{fileBasename}` や `{dir}` などのプレースホルダーを使ってコマンドを入力
+3. Enter で実行
 
-## デフォルトキーバインド
+## キーバインド
 
 - `Ctrl+Alt+I`: ターミナル入力ボックスを開く
-- `↑` / `↓`: コマンド履歴をナビゲート（入力ボックスがアクティブな時）
-
-## コマンド
-
-- `Quick Terminal: Input to Terminal` - ターミナルコマンド用の入力ボックスを開く
-- `Quick Terminal: Paste Command to InputBox` - 事前定義されたコマンドをアクティブな入力ボックスに貼り付け
-- `Quick Terminal: Input to Terminal with Pasted Command` - 事前定義されたコマンド付きで入力ボックスを開く
-- `Quick Terminal: Previous Command in History` - 前のコマンドに移動
-- `Quick Terminal: Next Command in History` - 次のコマンドに移動
+- `↑` / `↓`: コマンド履歴をナビゲート
+- `Ctrl+R`: コマンド履歴を検索
+- `Tab`: 検索結果を選択
+- `Esc`: 検索モードを終了
 
 ## プレースホルダー
 
-Quick Terminalは、実際の値に自動置換される様々なプレースホルダーをサポートしています：
+プレースホルダーはコマンド実行時に実際の値に自動置換されます。
 
-### 基本プレースホルダー
+### ファイルプレースホルダー
 
-- `{filename}` - 現在のファイル名（拡張子付き）（例：「my script.py」）
-- `{filestem}` - ファイル名（拡張子なし）（例：「script」）
-- `{filepath}` - 現在のファイルへのフルパス
-- `{fileext}` - ファイル拡張子（例：「.py」）
-- `{dirname}` - 現在のファイルを含むディレクトリ
-- `{relativepath}` - ワークスペースからの相対ファイルパス
-- `{workspace}` - ワークスペースのルートパス
-- `{workspacename}` - ワークスペースフォルダ名
+- `{file}` - 現在のファイルのフルパス
+- `{fileBasename}` - 拡張子付きのファイル名
+- `{fileBasenameNoExtension}` - 拡張子なしのファイル名
+- `{fileDirname}` - 現在のファイルがあるディレクトリ
+- `{dir}` - `{fileDirname}` の短縮エイリアス（パス用に便利）
+- `{fileExtname}` - ファイルの拡張子（例: `.py`, `.js`）
+- `{selectedText}` - 現在選択中のテキスト
+- `{lineNumber}` - 現在のカーソル行番号
+- `{columnNumber}` - 現在のカーソル列番号
 
-**注意**: プレースホルダーはワークスペース内のファイルで作業している場合にのみ利用可能です。ワークスペース外のファイル（独立したファイルや無題ファイルなど）では、プレースホルダーの置換はサポートされていません。
+### ワークスペースプレースホルダー
 
-### スマートパス処理
+- `{workspaceFolder}` - ワークスペースのルートパス
+- `{workspaceFolderBasename}` - ワークスペースフォルダ名
 
-プレースホルダーはパス内のスペースや特殊文字を自動的に処理します：
+### システムプレースホルダー
+
+- `{userHome}` - ユーザーのホームディレクトリ
+- `{cwd}` - 現在の作業ディレクトリ
+- `{pathSeparator}` - 現在のOSのパス区切り文字
+- `{env:VAR_NAME}` - 環境変数
+- `{config:setting.name}` - VS Code設定値
+- `{pythonPath}` - アクティブなPythonインタープリターのパス
+
+### 使用例
 
 ```bash
-# 単一プレースホルダー使用（自動クォート）
-python {filename}                    # → python "my script.py"
-cd {dirname}                        # → cd "/path/to/project"
+python {file}
+cd {dir}
+cp {fileBasename} backup/
+echo "現在の選択: {selectedText}"
+{pythonPath} -m pytest {dir}/test_{fileBasenameNoExtension}.py
+```
 
-# パス結合（自動結合とクォート）
-cat {dirname}/config.txt            # → cat "/path/to/project/config.txt"
-cp {filename} {workspace}/backup/   # → cp "script.py" "/workspace/backup/"
+### パス結合の例
+
+```bash
+# 自動結合とクォート
+cat {dir}/config.txt               # → cat "/path/to/project/config.txt"
+cp {fileBasename} {workspaceFolder}/backup/  # → cp "script.py" "/workspace/backup/"
 ```
 
 ## 設定
 
-### 拡張機能設定
+## 拡張機能設定
 
-- `quickTerminal.autoChangeDirectory`（string、デフォルト：「workspace」）
+- `quickTerminalCommand.autoChangeDirectory` (文字列, デフォルト: "workspace")
   - コマンド実行前のディレクトリ変更動作を制御
-  - オプション：
+  - オプション:
     - `"none"`: ディレクトリを変更しない
     - `"file"`: 現在のファイルのディレクトリに変更
-    - `"workspace"`: ワークスペースルートディレクトリに変更（デフォルト）
+    - `"workspace"`: ワークスペースのルートディレクトリに変更 (デフォルト)
 
-## カスタムキーバインドの例
+- `quickTerminalCommand.shell` (文字列, デフォルト: "")
+  - Quick Terminalで使用するシェル実行ファイルのパス
+  - 空の場合、VS Codeのデフォルトターミナルシェルを使用
+  - 例:
+    - Linux/Mac: `/bin/zsh`, `/bin/bash`, `/bin/fish`
+    - Windows: `pwsh`, `powershell`, `cmd`
 
-機能を拡張するために、VS Codeのkeybindings.jsonに以下を追加してください：
+- `quickTerminalCommand.shellArgs` (文字列配列, デフォルト: [])
+  - Quick Terminal用のシェル引数
+  - `quickTerminalCommand.shell`が指定されている場合のみ使用
+  - 例:
+    - Zshの場合: `["-l", "-i"]` (ログインシェル、インタラクティブモード)
+    - Bashの場合: `["--login", "-i"]`
+    - PowerShellの場合: `["-NoLogo", "-NoProfile"]`
 
-**注意**: `"quickTerminal.inputBoxActive"` の `when` 条件を使用して、Quick Terminalの入力ボックスがアクティブな時のみキーバインドが動作するようにしてください。これにより、他のVS Code機能との競合を防げます。
+## 設定形式
 
-### 基本コマンドテンプレート
+拡張機能は2つの主要な設定スタイルをサポートしています:
 
+### シンプルコマンド形式
+直接的なコマンド実行用:
 ```json
 {
-  "command": "quick-terminal.pasteCommand",
-  "key": "ctrl+l",
-  "when": "quickTerminal.inputBoxActive",
-  "args": "ls -la {dirname}"
+  "cmd": "npm test",
+  "autoExecute": true
 }
 ```
 
-### 自動実行コマンド
+### ルールベース形式
+ファイルタイプ固有のコマンド用:
+```json
+{
+  "rules": [
+    {
+      "filePattern": "*.py",
+      "cmd": "python {file}"
+    },
+    {
+      "filePattern": "*.js",
+      "cmd": "node {file}"
+    }
+  ],
+  "autoExecute": false
+}
+```
+
+### 設定プロパティ
+
+- **`cmd`** (文字列, オプション): 直接実行するコマンド
+- **`rules`** (配列, オプション): ファイルパターンベースのルール配列
+- **`autoExecute`** (真偽値, オプション): 入力ボックスを表示せずに自動実行 (デフォルト: `false`)
+
+**注意**: `cmd`または`rules`のどちらか（または両方）を指定する必要があります。両方指定した場合、`cmd`が優先されます。
+
+### ルールプロパティ
+
+- **`filePattern`** (文字列): ファイル名にマッチするGlobパターン (例: `"*.py"`, `"test_*.js"`, `"*"`)
+- **`cmd`** (文字列): パターンがマッチしたときに実行するコマンド
+
+## カスタムキーバインドの例
+
+機能を拡張するために、VS Codeのkeybindings.jsonに以下を追加してください:
+
+
+### シンプルコマンド実行
+
+入力表示状態でシンプルなコマンドを実行:
 
 ```json
 {
-  "command": "quick-terminal.pasteCommand",
   "key": "ctrl+alt+l",
-  "when": "quickTerminal.inputBoxActive",
+  "command": "quick-terminal-command.pasteCommand",
+  "when": "quickTerminalCommand.inputBoxActive",
   "args": {
-    "command": "ls -la {dirname}",
+    "cmd": "ls -la {dir}",
+    "autoExecute": true
+  }
+}
+```
+**注意**: pasteCommandでは`"quickTerminalCommand.inputBoxActive"`の`when`条件を使用して、Quick Terminal入力ボックスがアクティブな時のみキーバインドが動作するようにしてください。
+
+### 編集可能コマンドテンプレート
+
+実行前に編集するため入力ボックスにコマンドを表示:
+(実行時オプションを頻繁に変えるときなどに)
+
+```json
+{
+  "key": "ctrl+l",
+  "command": "quick-terminal-command.pasteCommand",
+  "when": "quickTerminalCommand.inputBoxActive",
+  "args": {
+    "cmd": "{pythonPath} -m pytest {file}"
+  }
+}
+```
+
+### ファイルパターンベースコマンド
+
+ファイルタイプに基づいて異なるコマンドを直接実行:
+
+```json
+{
+  "key": "ctrl+t",
+  "command": "quick-terminal-command.inputWithPastedCommand",
+  "when": "editorTextFocus",
+  "args": {
+    "rules": [
+      {
+        "filePattern": "test_*.py",
+        "cmd": "{pythonPath} -m pytest {fileBasename}"
+      },
+      {
+        "filePattern": "*.py",
+        "cmd": "{pythonPath} -u {file}"
+      },
+      {
+        "filePattern": "*.test.ts",
+        "cmd": "npm test {file}"
+      },
+      {
+        "filePattern": "*.ts",
+        "cmd": "npx ts-node {file}"
+      },
+      {
+        "filePattern": "*.rs",
+        "cmd": "cd {dir} && rustc {fileName} && {dir}{fileNameWithoutExt}"
+      },
+      {
+        "filePattern": "*",
+        "cmd": "echo '{fileBasename}用のコマンドがありません'"
+      }
+    ],
     "autoExecute": true
   }
 }
 ```
 
-### パターンベースコマンド
+### 高度な例: 混合使用
+
+異なるキーバインドでシンプルコマンドとパターンベースルールを組み合わせ:
 
 ```json
-{
-  "command": "quick-terminal.pasteCommand",
-  "key": "ctrl+t",
-  "when": "quickTerminal.inputBoxActive",
-  "args": [
-    {
-      "pattern": "test*.py",
-      "command": "python -m pytest {filename}"
-    },
-    {
-      "pattern": "*.test.ts",
-      "command": "npm test"
-    },
-    {
-      "pattern": "*.test.js",
-      "command": "npm test"
-    },
-    {
-      "pattern": "*",
-      "command": "echo '{filename}用のテストコマンドはありません'"
+[
+  {
+    "key": "ctrl+alt+r",
+    "command": "quick-terminal-command.inputWithPastedCommand",
+    "args": {
+      "cmd": "npm run dev",
+      "autoExecute": true
     }
-  ]
-}
-```
-
-### 事前定義コマンド付き入力
-
-```json
-{
-  "command": "quick-terminal.inputWithPastedCommand",
-  "key": "ctrl+alt+shift+r",
-  "when": "editorTextFocus",
-  "args": {
-    "command": [
-      {
-        "pattern": "*.py",
-        "command": "python {filename}"
-      },
-      {
-        "pattern": "*.js",
-        "command": "node {filename}"
-      },
-      {
-        "pattern": "*.ts",
-        "command": "npx ts-node {filename}"
-      }
-    ],
-    "autoExecute": false
+  },
+  {
+    "key": "ctrl+alt+t",
+    "command": "quick-terminal-command.inputWithPastedCommand",
+    "args": {
+      "rules": [
+        {
+          "filePattern": "*.test.*",
+          "cmd": "npm test"
+        },
+        {
+          "filePattern": "*",
+          "cmd": "npm run build"
+        }
+      ]
+    }
   }
-}
+]
 ```
 
 ## 使用例
@@ -159,89 +254,98 @@ cp {filename} {workspace}/backup/   # → cp "script.py" "/workspace/backup/"
 
 ```bash
 # 現在のファイルを実行
-python {filename}
-node {filename}
-npx ts-node {filename}
+python {file}
+node {file}
+npx ts-node {file}
 
 # テストを実行
-python -m pytest {filename}
+python -m pytest {fileBasename}
 npm test
-jest {filename}
+jest {fileBasename}
 
 # ファイル操作
-cat {filename}
-cp {filename} {dirname}/backup/
-mv {filename} {dirname}/archive/
+cat {fileBasename}
+cp {fileBasename} {dir}/backup/
+mv {fileBasename} {dir}/archive/
 
 # ビルドとデプロイ
-docker build -t myapp {dirname}
-rsync -av {dirname}/ user@server:/path/
+docker build -t myapp {dir}
+rsync -av {dir}/ user@server:/path/
 ```
 
 ### 設定ファイル
 
 ```bash
 # 設定ファイルを編集
-code {dirname}/config.json
-vim {workspace}/.env
-cat {dirname}/requirements.txt
+code {dir}/config.json
+vim {workspaceFolder}/.env
+cat {dir}/requirements.txt
 ```
 
 ### ログとデバッグ
 
 ```bash
 # ログを表示
-tail -f {workspace}/logs/app.log
-grep -r "ERROR" {dirname}
-find {workspace} -name "*.log"
+tail -f {workspaceFolder}/logs/app.log
+grep -r "ERROR" {dir}
+find {workspaceFolder} -name "*.log"
 ```
 
 ## スマートターミナル選択
 
-Quick Terminalは、ターミナルがビジー状態の可能性を自動的に検出し、必要に応じて新しいターミナルを作成します。一般的な開発サーバーパターンを認識します：
+Quick Terminalは、すべてのコマンド実行に「q-terminal」という名前の専用ターミナルを使用します。これにより一貫性のある予測可能な動作を提供します:
 
-- `npm run dev`、`yarn dev`
-- `docker compose up`
-- `uvicorn`、`fastapi`、`django runserver`
-- `jupyter lab`、`streamlit run`
-- その他多数...
+- **専用ターミナル**: 常に「q-terminal」という名前のターミナルを使用または作成
+- **自動作成**: 「q-terminal」が存在しない場合、新しく作成して表示
+- **カスタムシェル対応**: `quickTerminalCommand.shell`と`quickTerminalCommand.shellArgs`設定から設定されたシェルを使用
+- **プロセス分離**: ターミナル名を変更する長時間実行プロセス（`npm run dev`など）がクイックコマンドに干渉しない
+- **一貫した履歴**: すべてのクイックコマンドが同じターミナルで実行されるため、コマンド履歴の追跡が容易
+
+`npm run dev`などのコマンドを実行すると、VS Codeは通常ターミナル名を変更します（例:「npm: dev」）。このターミナルは「q-terminal」という名前でなくなるため、拡張機能は後続のクイックコマンド用に新しい「q-terminal」を作成し、開発サーバーとクイックコマンド実行を分離します。
+
+### シェル設定
+
+Quick TerminalはVS Codeのデフォルトターミナル設定とは独立してシェルをカスタマイズできます:
+
+```json
+{
+  "quickTerminalCommand.shell": "/bin/zsh",
+  "quickTerminalCommand.shellArgs": ["-l", "-i"]
+}
+```
+
+これにより以下が可能になります:
+- 通常のターミナルとは異なるシェルをQuick Terminalコマンド用に使用
+- コマンド実行に最適な特定のシェルオプションを設定
+- 異なるワークスペースやチーム環境での一貫性を保持
 
 ## コツとトリック
 
-1. **コマンド履歴**: `↑` と `↓` の矢印キーでコマンド履歴をナビゲート
-2. **パス結合**: 安全なパス結合には `{dirname}/subfolder/file` を使用
-3. **自動実行**: 頻繁に実行するコマンドには `"autoExecute": true` を設定
-4. **パターンマッチング**: 異なるファイルタイプに対して異なるコマンドを作成
-5. **ディレクトリ制御**: `quickTerminal.autoChangeDirectory` で作業ディレクトリを制御：
-   - `"workspace"`（デフォルト）: ワークスペースルートからコマンドを実行
+1. **コマンド履歴**: `↑`と`↓`の矢印キーでコマンド履歴をナビゲート
+2. **インクリメンタル検索**: `Ctrl+R`で部分一致入力によるクイック検索
+3. **検索と編集**: `Tab`で検索結果を選択してから実行前に編集
+4. **複数検索語**: コマンドの任意の部分で検索可能（例: "fix"で"git commit -m 'fix bug'"を検索）
+5. **パス結合**: 安全なパス結合には`{dirname}/subfolder/file`を使用
+6. **自動実行**: 頻繁に実行するコマンドには`"autoExecute": true`を設定
+7. **パターンマッチング**: 異なるファイルタイプに対して異なるコマンドを作成
+8. **ディレクトリ制御**: `quickTerminalCommand.autoChangeDirectory`で作業ディレクトリを制御:
+   - `"workspace"` (デフォルト): ワークスペースルートからコマンドを実行
    - `"file"`: 現在のファイルのディレクトリからコマンドを実行
    - `"none"`: 現在のターミナルディレクトリからコマンドを実行
 
-## 要件
+---
 
-- VS Code 1.105.0 以上
+## 実験的機能
 
-## 既知の問題
+### 自動ディレクトリ変更（実験的）
 
-現在、既知の問題はありません。問題を発見した場合はGitHubで報告してください。
+`quickTerminalCommand.autoChangeDirectory` の `"auto"` オプションは、コマンドタイプを自動判別して設定ファイルに基づいて適切なディレクトリに変更します。
 
-## リリースノート
+**サポートされるコマンド:**
+- `npm`/`yarn`/`pnpm` → `package.json` を探す
+- `pytest` → `pytest.ini`、`pyproject.toml` を探す
+- `docker compose` → `docker-compose.yml` を探す
+- `make` → `Makefile` を探す
+- その他多数...
 
-### 0.0.1
-
-- 初回リリース
-- 基本的なターミナル入力機能
-- 自動パス処理を備えたスマートプレースホルダーシステム
-- コマンド履歴ナビゲーション
-- 自動ディレクトリ変更（設定可能）
-- インテリジェントなターミナル選択
-- コマンドテンプレートとパターンマッチングのサポート
-- 自動実行機能
-
-## 貢献
-
-バグを見つけたり、機能リクエストがありましたら、GitHubでIssueを開いてください。
-
-## ライセンス
-
-この拡張機能はMITライセンスの下でライセンスされています。
+**注意:** これは実験的機能で変更される可能性があります。予測可能な動作には `"file"`、`"workspace"`、または `"none"` を使用してください。

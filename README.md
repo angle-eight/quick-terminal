@@ -1,154 +1,247 @@
 # Quick Terminal Command
 
-A VS Code extension for quick terminal command input with smart placeholders, command history, and flexible execution options.
+A VS Code extension for quick terminal command input with placeholders and command history.
 
 **[日本語版 README](README.ja.md) | [English README](README.md)**
 
-## Features
+## Basic Usage
 
-- **Quick Terminal Input**: Open an input box to quickly type and execute terminal commands
-- **Smart Placeholders**: Use placeholders like `{filename}`, `{dirname}`, etc. with automatic path handling
-- **Command History**: Navigate through previous commands with arrow keys
-- **Auto Directory Change**: Automatically cd to the current file's directory (configurable)
-- **Flexible Command Templates**: Support for pattern matching and auto-execution
+1. Press `Ctrl+Alt+I` to open the terminal input box
+2. Type a command using placeholders like `{fileBasename}` or `{dir}`
+3. Press Enter to execute
 
-## Default Keybindings
+## Keybindings
 
 - `Ctrl+Alt+I`: Open terminal input box
-- `↑` / `↓`: Navigate command history (when input box is active)
-
-## Commands
-
-- `Quick Terminal: Input to Terminal` - Open input box for terminal command
-- `Quick Terminal: Paste Command to InputBox` - Paste predefined command to active input box
-- `Quick Terminal: Input to Terminal with Pasted Command` - Open input box with predefined command
-- `Quick Terminal: Previous Command in History` - Navigate to previous command
-- `Quick Terminal: Next Command in History` - Navigate to next command
+- `↑` / `↓`: Navigate command history
+- `Ctrl+R`: Search command history
+- `Tab`: Select search result
+- `Esc`: Exit search mode
 
 ## Placeholders
 
-Quick Terminal supports various placeholders that are automatically replaced with actual values:
+Placeholders are automatically replaced with actual values when executing commands.
 
-### Basic Placeholders
+### File Placeholders
 
-- `{filename}` - Current file name with extension (e.g., "my script.py")
-- `{filestem}` - File name without extension (e.g., "script")
-- `{filepath}` - Full path to current file
-- `{fileext}` - File extension (e.g., ".py")
-- `{dirname}` - Directory containing current file
-- `{relativepath}` - File path relative to workspace
-- `{workspace}` - Workspace root path
-- `{workspacename}` - Workspace folder name
+- `{file}` - Full path to current file
+- `{fileBasename}` - Current file name with extension
+- `{fileBasenameNoExtension}` - Current file name without extension
+- `{fileDirname}` - Directory containing current file
+- `{dir}` - Short alias for `{fileDirname}` (convenient for paths)
+- `{fileExtname}` - File extension (e.g., `.py`, `.js`)
+- `{selectedText}` - Currently selected text
+- `{lineNumber}` - Current cursor line number
+- `{columnNumber}` - Current cursor column number
 
-**Note**: Placeholders are only available when working with files within a workspace. Files outside of workspace (such as standalone files or untitled files) do not support placeholder replacement.
+### Workspace Placeholders
 
-### Smart Path Handling
+- `{workspaceFolder}` - Workspace root path
+- `{workspaceFolderBasename}` - Workspace folder name
 
-Placeholders automatically handle spaces and special characters in paths:
+### System Placeholders
+
+- `{userHome}` - User home directory
+- `{cwd}` - Current working directory
+- `{pathSeparator}` - Path separator for current OS
+- `{env:VAR_NAME}` - Environment variable
+- `{config:setting.name}` - VS Code configuration value
+- `{pythonPath}` - Active Python interpreter path
+
+### Examples
 
 ```bash
-# Single placeholder usage (automatically quoted)
-python {filename}                    # → python "my script.py"
-cd {dirname}                        # → cd "/path/to/project"
-
-# Path concatenation (automatically combines and quotes)
-cat {dirname}/config.txt            # → cat "/path/to/project/config.txt"
-cp {filename} {workspace}/backup/   # → cp "script.py" "/workspace/backup/"
+python {file}
+cd {dir}
+cp {fileBasename} backup/
+echo "Current selection: {selectedText}"
+{pythonPath} -m pytest {dir}/test_{fileBasenameNoExtension}.py
 ```
-
 ## Configuration
 
-- `quickTerminal.autoChangeDirectory` (string, default: "workspace")
+- `quickTerminalCommand.autoChangeDirectory` (default: "workspace")
+  - `"none"`: Do not change directory
+  - `"file"`: Change to current file's directory
+  - `"workspace"`: Change to workspace root directory
+```
+
+## Configuration Format
+
+The extension supports two main configuration styles:
+
+### Simple Command Style
+For straightforward command execution:
+```json
+{
+  "cmd": "npm test",
+  "autoExecute": true
+}
+```
+
+### Rule-Based Style
+For file type-specific commands:
+```json
+{
+  "rules": [
+    {
+      "filePattern": "*.py",
+      "cmd": "python {file}"
+    },
+    {
+      "filePattern": "*.js",
+      "cmd": "node {file}"
+    }
+  ],
+  "autoExecute": false
+}
+```
+
+### Configuration Properties
+
+- **`cmd`** (string, optional): Direct command to execute
+- **`rules`** (array, optional): Array of file pattern-based rules
+- **`autoExecute`** (boolean, optional): Auto-execute command without showing input box (default: `false`)
+
+**Note**: You must specify either `cmd` or `rules` (or both, where `cmd` takes precedence).
+
+### Rule Properties
+
+- **`filePattern`** (string): Glob pattern to match filenames (e.g., `"*.py"`, `"test_*.js"`, `"*"`)
+- **`cmd`** (string): Command to execute when pattern matches
+
+## Extension Settings
+
+- `quickTerminalCommand.autoChangeDirectory` (string, default: "workspace")
   - Controls directory changing behavior before executing commands
   - Options:
     - `"none"`: Do not change directory
     - `"file"`: Change to current file's directory
     - `"workspace"`: Change to workspace root directory (default)
 
+- `quickTerminalCommand.shell` (string, default: "")
+  - Shell executable path for quick terminal
+  - Leave empty to use VS Code's default terminal shell
+  - Examples:
+    - Linux/Mac: `/bin/zsh`, `/bin/bash`, `/bin/fish`
+    - Windows: `pwsh`, `powershell`, `cmd`
+
+- `quickTerminalCommand.shellArgs` (array of strings, default: [])
+  - Shell arguments for quick terminal
+  - Only used when `quickTerminalCommand.shell` is specified
+  - Examples:
+    - For Zsh: `["-l", "-i"]` (login shell, interactive mode)
+    - For Bash: `["--login", "-i"]`
+    - For PowerShell: `["-NoLogo", "-NoProfile"]`
+
 ## Custom Keybindings Examples
 
 Add these to your VS Code keybindings.json for enhanced functionality:
 
-**Note**: Use the `when` condition `"quickTerminal.inputBoxActive"` to ensure keybindings only work when the Quick Terminal input box is active. This prevents conflicts with other VS Code functionality.
+**Note**: Use the `when` condition `"quickTerminalCommand.inputBoxActive"` to ensure keybindings only work when the Quick Terminal input box is active. This prevents conflicts with other VS Code functionality.
 
-### Basic Command Templates
+### Simple Command Execution
 
-```json
-{
-  "command": "quick-terminal.pasteCommand",
-  "key": "ctrl+l",
-  "when": "quickTerminal.inputBoxActive",
-  "args": "ls -la {dirname}"
-}
-```
-
-### Auto-Execute Commands
+Execute a simple command directly:
 
 ```json
 {
-  "command": "quick-terminal.pasteCommand",
   "key": "ctrl+alt+l",
-  "when": "quickTerminal.inputBoxActive",
+  "command": "quick-terminal-command.pasteCommand",
+  "when": "quickTerminalCommand.inputBoxActive",
   "args": {
-    "command": "ls -la {dirname}",
+    "cmd": "ls -la {dir}",
     "autoExecute": true
   }
 }
 ```
 
-### Pattern-Based Commands
+### Editable Command Template
+
+Show command in input box for editing before execution:
 
 ```json
 {
-  "command": "quick-terminal.pasteCommand",
-  "key": "ctrl+t",
-  "when": "quickTerminal.inputBoxActive",
-  "args": [
-    {
-      "pattern": "test*.py",
-      "command": "python -m pytest {filename}"
-    },
-    {
-      "pattern": "*.test.ts",
-      "command": "npm test"
-    },
-    {
-      "pattern": "*.test.js",
-      "command": "npm test"
-    },
-    {
-      "pattern": "*",
-      "command": "echo 'No test command for {filename}'"
-    }
-  ]
+  "key": "ctrl+l",
+  "command": "quick-terminal-command.pasteCommand",
+  "when": "quickTerminalCommand.inputBoxActive",
+  "args": {
+    "cmd": "ls -la {dir}"
+  }
 }
 ```
 
-### Input with Predefined Commands
+### File Pattern-Based Commands
+
+Execute different commands based on file type:
 
 ```json
 {
-  "command": "quick-terminal.inputWithPastedCommand",
-  "key": "ctrl+alt+shift+r",
+  "key": "ctrl+t",
+  "command": "quick-terminal-command.inputWithPastedCommand",
   "when": "editorTextFocus",
   "args": {
-    "command": [
+    "rules": [
       {
-        "pattern": "*.py",
-        "command": "python {filename}"
+        "filePattern": "test_*.py",
+        "cmd": "{pythonPath} -m pytest {fileBasename}"
       },
       {
-        "pattern": "*.js",
-        "command": "node {filename}"
+        "filePattern": "*.py",
+        "cmd": "{pythonPath} -u {file}"
       },
       {
-        "pattern": "*.ts",
-        "command": "npx ts-node {filename}"
+        "filePattern": "*.test.ts",
+        "cmd": "npm test {file}"
+      },
+      {
+        "filePattern": "*.ts",
+        "cmd": "npx ts-node {file}"
+      },
+      {
+        "filePattern": "*.rs",
+        "cmd": "cd {dir} && rustc {fileName} && {dir}{fileNameWithoutExt}"
+      },
+      {
+        "filePattern": "*",
+        "cmd": "echo 'No command available for {fileBasename}'"
       }
     ],
-    "autoExecute": false
+    "autoExecute": true
   }
 }
+```
+
+### Advanced Example: Mixed Usage
+
+You can combine simple commands with pattern-based rules by using different keybindings:
+
+```json
+[
+  {
+    "key": "ctrl+alt+r",
+    "command": "quick-terminal-command.inputWithPastedCommand",
+    "args": {
+      "cmd": "npm run dev",
+      "autoExecute": true
+    }
+  },
+  {
+    "key": "ctrl+alt+t",
+    "command": "quick-terminal-command.inputWithPastedCommand",
+    "args": {
+      "rules": [
+        {
+          "filePattern": "*.test.*",
+          "cmd": "npm test"
+        },
+        {
+          "filePattern": "*",
+          "cmd": "npm run build"
+        }
+      ]
+    }
+  }
+]
 ```
 
 ## Use Cases
@@ -157,91 +250,100 @@ Add these to your VS Code keybindings.json for enhanced functionality:
 
 ```bash
 # Run current file
-python {filename}
-node {filename}
-npx ts-node {filename}
+python {file}
+node {file}
+npx ts-node {file}
 
 # Run tests
-python -m pytest {filename}
+python -m pytest {fileBasename}
 npm test
-jest {filename}
+jest {fileBasename}
 
 # File operations
-cat {filename}
-cp {filename} {dirname}/backup/
-mv {filename} {dirname}/archive/
+cat {fileBasename}
+cp {fileBasename} {dir}/backup/
+mv {fileBasename} {dir}/archive/
 
 # Build and deployment
-docker build -t myapp {dirname}
-rsync -av {dirname}/ user@server:/path/
+docker build -t myapp {dir}
+rsync -av {dir}/ user@server:/path/
 ```
 
 ### Configuration Files
 
 ```bash
 # Edit configuration files
-code {dirname}/config.json
-vim {workspace}/.env
-cat {dirname}/requirements.txt
+code {dir}/config.json
+vim {workspaceFolder}/.env
+cat {dir}/requirements.txt
 ```
 
 ### Log and Debugging
 
 ```bash
 # View logs
-tail -f {workspace}/logs/app.log
-grep -r "ERROR" {dirname}
-find {workspace} -name "*.log"
+tail -f {workspaceFolder}/logs/app.log
+grep -r "ERROR" {dir}
+find {workspaceFolder} -name "*.log"
 ```
 
 ## Smart Terminal Selection
 
-Quick Terminal automatically detects when terminals might be busy and creates new ones when needed. It recognizes common development server patterns:
+Quick Terminal uses a dedicated terminal named "q-terminal" for all command executions. This provides consistent and predictable behavior:
 
-- `npm run dev`, `yarn dev`
-- `docker compose up`
-- `uvicorn`, `fastapi`, `django runserver`
-- `jupyter lab`, `streamlit run`
-- And many more...
+- **Dedicated Terminal**: Always uses or creates a terminal named "q-terminal"
+- **Automatic Creation**: If no "q-terminal" exists, creates a new one and displays it
+- **Custom Shell Support**: Uses configured shell from `quickTerminalCommand.shell` and `quickTerminalCommand.shellArgs` settings
+- **Process Isolation**: Long-running processes (like `npm run dev`) that rename terminals won't interfere with quick commands
+- **Consistent History**: All quick commands are executed in the same terminal, making it easy to track command history
+
+When you run commands like `npm run dev`, VS Code typically renames the terminal (e.g., to "npm: dev"). Since this terminal no longer has the name "q-terminal", the extension will create a new "q-terminal" for subsequent quick commands, keeping your development servers separate from quick command execution.
+
+### Shell Configuration
+
+You can customize the shell used by Quick Terminal independently of VS Code's default terminal settings:
+
+```json
+{
+  "quickTerminalCommand.shell": "/bin/zsh",
+  "quickTerminalCommand.shellArgs": ["-l", "-i"]
+}
+```
+
+This allows you to:
+- Use a different shell for Quick Terminal commands than your regular terminal
+- Set specific shell options that are optimal for command execution
+- Maintain consistency across different workspaces or team environments
 
 ## Tips and Tricks
 
 1. **Command History**: Use `↑` and `↓` arrows to navigate through your command history
-2. **Path Concatenation**: Use `{dirname}/subfolder/file` for safe path joining
-3. **Auto-Execute**: Set `"autoExecute": true` for commands you run frequently
-4. **Pattern Matching**: Create different commands for different file types
-5. **Directory Control**: Use `quickTerminal.autoChangeDirectory` to control working directory:
+2. **Incremental Search**: Use `Ctrl+R` to quickly find commands by typing partial matches
+3. **Search and Edit**: Use `Tab` to select a search result, then edit before executing
+4. **Multiple Search Terms**: Search works with any part of the command (e.g., search "fix" to find "git commit -m 'fix bug'")
+5. **Path Concatenation**: Use `{dirname}/subfolder/file` for safe path joining
+6. **Auto-Execute**: Set `"autoExecute": true` for commands you run frequently
+7. **Pattern Matching**: Create different commands for different file types
+8. **Directory Control**: Use `quickTerminalCommand.autoChangeDirectory` to control working directory:
    - `"workspace"` (default): Commands run from workspace root
    - `"file"`: Commands run from current file's directory
    - `"none"`: Commands run from current terminal directory
 
-## Requirements
 
-- VS Code 1.105.0 or higher
 
-## Known Issues
+---
 
-None currently known. Please report issues on GitHub.
+## Experimental Features
 
-## Release Notes
+### Auto Directory Change (Experimental)
 
-### 0.0.1
+The `"auto"` option for `quickTerminalCommand.autoChangeDirectory` automatically detects the command type and changes to the appropriate directory based on configuration files.
 
-- Initial release
-- Basic terminal input functionality
-- Smart placeholder system with automatic path handling
-- Command history navigation
-- Auto directory changing (configurable)
-- Intelligent terminal selection
-- Support for command templates and pattern matching
-- Auto-execution capability
+**Supported Commands:**
+- `npm`/`yarn`/`pnpm` → looks for `package.json`
+- `pytest` → looks for `pytest.ini`, `pyproject.toml`
+- `docker compose` → looks for `docker-compose.yml`
+- `make` → looks for `Makefile`
+- And many others...
 
-## Contributing
-
-Found a bug or have a feature request? Please open an issue on GitHub.
-
-## License
-
-This extension is licensed under the MIT License.
-
-**Enjoy!**
+**Note:** This is experimental and may change. Use `"file"`, `"workspace"`, or `"none"` for predictable behavior.
